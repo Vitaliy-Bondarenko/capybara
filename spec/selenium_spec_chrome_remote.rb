@@ -27,10 +27,16 @@ Capybara.register_driver :selenium_chrome_remote do |app|
   url = "http://#{selenium_host}:#{selenium_port}/wd/hub"
   caps = Selenium::WebDriver::Remote::Capabilities.chrome
 
-  Capybara::Selenium::Driver.new app,
+  driver = Capybara::Selenium::Driver.new app,
                                  browser: :remote,
                                  desired_capabilities: caps,
                                  url: url
+  bridge = driver.browser.send(:bridge)
+  params = { cmd: 'Page.setDownloadBehavior', params: { behavior: 'allow', downloadPath: Capybara.save_path } }
+  command = +'/session/:session_id/chromium/send_command'
+  command[':session_id'] = bridge.session_id
+  bridge.http.call(:post, command, params)
+  driver
 end
 
 CHROME_REMOTE_DRIVER = :selenium_chrome_remote
